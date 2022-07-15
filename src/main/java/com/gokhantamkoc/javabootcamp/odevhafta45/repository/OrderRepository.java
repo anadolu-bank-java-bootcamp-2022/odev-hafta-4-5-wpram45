@@ -3,6 +3,7 @@ package com.gokhantamkoc.javabootcamp.odevhafta45.repository;
 import com.gokhantamkoc.javabootcamp.odevhafta45.model.Order;
 import com.gokhantamkoc.javabootcamp.odevhafta45.model.OrderDetail;
 import com.gokhantamkoc.javabootcamp.odevhafta45.model.Owner;
+import com.gokhantamkoc.javabootcamp.odevhafta45.model.Product;
 import com.gokhantamkoc.javabootcamp.odevhafta45.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,8 +42,7 @@ public class OrderRepository {
     }
 
     public List<Order> getAll() {
-        final String SQL =
-                "SELECT id, status, requester_id, bidder_id, requester_address, bidder_address FROM public.order";
+        final String SQL = "SELECT id, status, requester_id, bidder_id, requester_address, bidder_address FROM public.order";
         List<Order> orders = new ArrayList<>();
         try (PreparedStatement preparedStatement = databaseConnection.getConnection().prepareStatement(SQL)) {
             ResultSet rs = preparedStatement.executeQuery();
@@ -96,6 +96,31 @@ public class OrderRepository {
 
     public List<OrderDetail> getOrderDetails(long orderId) {
         // BU METHODU 2. GOREV ICIN DOLDURUNUZ
+        final String SQL = "SELECT id,status,type,order_id,product_id,amount,amount_type from public.order_detail where order_id=?";
+        List<OrderDetail> orderDetails = new ArrayList<>();
+        try (PreparedStatement preparedStatement = databaseConnection.getConnection().prepareStatement(SQL)) {
+            preparedStatement.setLong(1,orderId);
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong("id");
+                String status = rs.getString("status");
+                String type= rs.getString("type");
+                Order order= this.orderRepository.get(Long.parseLong(rs.getString("order_id")));
+                Product product= this.productRepository.get(Long.parseLong(rs.getString("product_id")));
+                float amount=rs.getFloat("amount");
+                String amountType=rs.getString("amount_type");
+
+                orderDetails.add(
+                        new OrderDetail(id,status,type,order,product,amount,amountType)
+                );
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        return orderDetails;
+
+
     }
 
     public void save(Order order) throws RuntimeException {
